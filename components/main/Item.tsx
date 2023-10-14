@@ -2,17 +2,32 @@
 
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, LucideIcon, Plus } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  LucideIcon,
+  MoreHorizontal,
+  Plus,
+  Trash,
+} from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { useUser } from "@clerk/clerk-react";
 
 interface ItemProps {
-  onClick: () => void;
   label: string;
   icon: LucideIcon;
+  onClick?: () => void;
   id?: Id<"documents">;
   documentIcon?: string;
   active?: boolean;
@@ -35,7 +50,9 @@ const Item = ({
   onExpand,
 }: ItemProps) => {
   const create = useMutation(api.documents.create);
+  const archive = useMutation(api.documents.archive);
   const router = useRouter();
+  const { user } = useUser();
 
   const ChevronIcon = expanded ? ChevronDown : ChevronRight;
 
@@ -61,6 +78,19 @@ const Item = ({
       loading: "Creating a new note...",
       success: "New note created!",
       error: "Failed to create a new note.",
+    });
+  };
+
+  const onArchive = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.stopPropagation();
+    if (!id) return;
+
+    const promise = archive({ id });
+
+    toast.promise(promise, {
+      loading: "Moving to trash...",
+      success: "Note moved to trash!",
+      error: "Failed to archive note.",
     });
   };
 
@@ -97,6 +127,31 @@ const Item = ({
       )}
       {!!id && (
         <div className="ml-auto flex items-center gap-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <div
+                role="button"
+                className="ml-auto h-full rounded-sm opacity-0 hover:bg-neutral-300 group-hover:opacity-100 dark:hover:bg-neutral-600"
+              >
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-60"
+              align="start"
+              side="right"
+              forceMount
+            >
+              <DropdownMenuItem onClick={onArchive}>
+                <Trash className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <div className="p-2 text-xs text-muted-foreground">
+                Last edited by: {user?.fullName}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div
             role="button"
             onClick={onCreate}
