@@ -72,7 +72,7 @@ const Item = ({
       if (!expanded) {
         onExpand?.();
       }
-      // router.push(`/documents/${documentId}`);
+      router.push(`/documents/${documentId}`);
     });
     toast.promise(promise, {
       loading: "Creating a new note...",
@@ -85,7 +85,7 @@ const Item = ({
     e.stopPropagation();
     if (!id) return;
 
-    const promise = archive({ id });
+    const promise = archive({ id }).then(() => router.push("/documents"));
 
     toast.promise(promise, {
       loading: "Moving to trash...",
